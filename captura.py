@@ -1,41 +1,71 @@
 import cv2
 
-# Carregar o arquivo de reconhecimento
+# carregar o arquivo de detecção de faces
 classificador = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
 
-# especificando por onde ele vai capturar o video por número / 0 para webcam por estar em notebook
+# indicar captura das imagens / 0 para webcam
 camera = cv2.VideoCapture(0)
 
+# controla todos tiradas
+amostra = 1
+
+# total de fotas
+numeroAmostra = 25
+
+id = input('Digite seu identificador: ')
+
+# tamanho da foto tirada
+altura, largura = 220, 220
+
+print('Capturando as faces...')
+
 while True:
-    # variaveis que vão receber a leitura da webcam
+    # transferindo para as variaveis a leitura da camera/imagens
     conectado, imagem = camera.read()
 
-    # fazer detecção em uma escala de imagens cinzas/ Imagem que deseja escolher e tipo de converção
-    imagemCinza = cv2.cvtColor(imagem, cv2.COLOR_BGR2GRAY)
+    # com imagens cinza o desenpenho do algoritmo tende a sewr melhor / converte a imagem recebida para Gray
+    imagemCinza = cv2.cvtColor(imagem, cv2.COLOR_BGR2BGRA)
 
-    # passar imagens que deseja detectar / todas que ele conseguir identificar
+    # detecta as faces
     facesDetectadas = classificador.detectMultiScale(imagemCinza,
-                                                     # scala da imagem
+                                                     # escala da imagem
                                                      scaleFactor=1.5,
                                                      # tamanho da imagem
-                                                     minSize=(100, 100))
-    # fazer contorno / x, y largura altura
-    # dentro de facesDetectadas existe uma matriz onde identifica onde começa e termina uma face
-    for (x, y, l, a) in facesDetectadas:
-        # fazer o retangulo / onde ele exibira(webcam),
+                                                     minSize=(150, 150)
+                                                     )
+
+    # retem o posicionamento da face encontrada repassando suas coordenadas
+    for x, y, l, a in facesDetectadas:
+        # desenhar um retangulo onde a face foi detectada
         cv2.rectangle(imagem,
-                      # parametros de posicionamento
+                      # onde começa
                       (x, y),
-                      # onde ele fechara o contorno
+                      # onde termina
                       (x + l, y + a),
-                      # cor
-                      (0, 0, 255),
-                      # tamanho da borda
-                      2)
-    # mostrar a imagem capturada na webcam
-    cv2.imshow("FACE", imagem)
+                      # valor que deseja pintar e tamanho da borda
+                      (0, 0, 255), 2
+                      )
+
+        # Toda vez que apertar a tecla 'q' ele executara
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            # Redimencionar a imagem
+            imagemFace = cv2.resize(imagemCinza[y:y + a, x:x + l], (altura, largura))
+            # Gravas as imagens (nome / imagem redimencionada)
+            cv2.imwrite(f"fotos/pessoa_{str(id)}_{str(amostra)}.jpg", imagemFace)
+
+            print(f'foto {str(amostra)} capturada com sucesso')
+
+            # incremento
+            amostra += 1
+
+    # mostrar a imagem capturada
+    cv2.imshow("Face", imagem)
     cv2.waitKey(1)
 
-# Salvar na memoria
+    # se o número de fotos capturada for maior que o numero de amostra
+    if amostra >= numeroAmostra + 1:
+        # para o loop
+        break
+
 camera.release()
 cv2.destroyAllWindows()
