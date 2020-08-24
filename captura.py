@@ -1,7 +1,12 @@
 import cv2
 
 # carregar o arquivo de detecção de faces
+import numpy as np
+
 classificador = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+
+# carregar arquivo de detecção dos olhos
+classificadorOlhos = cv2.CascadeClassifier("haarcascade_eye.xml")
 
 # indicar captura das imagens / 0 para webcam
 camera = cv2.VideoCapture(0)
@@ -45,18 +50,39 @@ while True:
                       # valor que deseja pintar e tamanho da borda
                       (0, 0, 255), 2
                       )
+        # apenas o quadrado
+        regiao = imagem[y:y + a, x:x + l]
 
-        # Toda vez que apertar a tecla 'q' ele executara
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            # Redimencionar a imagem
-            imagemFace = cv2.resize(imagemCinza[y:y + a, x:x + l], (altura, largura))
-            # Gravas as imagens (nome / imagem redimencionada)
-            cv2.imwrite(f"fotos/pessoa_{str(id)}_{str(amostra)}.jpg", imagemFace)
+        # capturar regiao e transformando para cinza
+        regiaoCinzaOlho = cv2.cvtColor(regiao, cv2.COLOR_BGR2GRAY)
 
-            print(f'foto {str(amostra)} capturada com sucesso')
+        # detectando olhos
+        olhosDetectados = classificadorOlhos.detectMultiScale(regiaoCinzaOlho)
 
-            # incremento
-            amostra += 1
+        # desenhar retangulo nos olhos
+        for ox, oy, ol, oa in olhosDetectados:
+            # desenhar retangulo na regiao especificada
+            cv2.rectangle(regiao,
+                          # onde começa
+                          (ox, oy),
+                          # onde termina
+                          (ox + ol, oy + oa),
+                          # cor e tamanho da borda
+                          (0, 255, 0), 2
+                          )
+
+            # Toda vez que apertar a tecla 'q' ele executara
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                # if np.average(imagemCinza) > 110:
+                # Redimencionar a imagem
+                imagemFace = cv2.resize(imagemCinza[y:y + a, x:x + l], (altura, largura))
+                # Gravas as imagens (nome / imagem redimencionada)
+                cv2.imwrite(f"fotos/pessoa_{str(id)}_{str(amostra)}.jpg", imagemFace)
+
+                print(f'foto {str(amostra)} capturada com sucesso')
+
+                # incremento
+                amostra += 1
 
     # mostrar a imagem capturada
     cv2.imshow("Face", imagem)
